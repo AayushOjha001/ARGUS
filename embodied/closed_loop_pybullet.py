@@ -282,7 +282,12 @@ class VLMPolicy:
         from argus.modeling import VisionLanguageRunner, get_language_layers
 
         if dtype == "auto":
-            torch_dtype = torch.bfloat16 if torch.cuda.is_available() and torch.cuda.get_device_capability()[0] >= 8 else torch.float16
+            if not torch.cuda.is_available():
+                torch_dtype = torch.float32
+            elif torch.cuda.get_device_capability()[0] >= 8:
+                torch_dtype = torch.bfloat16
+            else:  # T4 / P100: no native bf16
+                torch_dtype = torch.float16
         else:
             torch_dtype = {"bf16": torch.bfloat16, "fp16": torch.float16, "fp32": torch.float32}[dtype]
         self.runner = VisionLanguageRunner(model, dtype=torch_dtype)

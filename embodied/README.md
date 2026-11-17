@@ -18,8 +18,13 @@ python embodied/closed_loop_pybullet.py --policy oracle-attacker --episodes 3
 
 ## Kaggle (GPU T4, Internet ON)
 
+Easiest: in Kaggle, go to **Create → New Notebook → File → Import Notebook → GitHub** and paste
+`https://github.com/AayushOjha001/ARGUS/blob/main/embodied/kaggle_closed_loop.ipynb`.
+Or run the steps by hand:
+
 ```python
-!git clone https://github.com/<you>/ARGUS.git && cd ARGUS
+!git clone https://github.com/AayushOjha001/ARGUS.git
+%cd ARGUS
 !pip install -q pybullet qwen-vl-utils
 !python embodied/closed_loop_pybullet.py --policy vlm --model Qwen/Qwen2-VL-2B-Instruct \
     --conditions clean,benign_card,attack_card,attack_overlay --episodes 20 --out /kaggle/working/emb
