@@ -59,6 +59,8 @@ PROMPT = (
     "Actions taken so far: {history}\n"
     "Result of the last action: {last_result}\n"
     "Gripper is currently holding: {holding}\n"
+    "Cubes on the tray: {tray}\n"
+    "When the task is complete, answer 'done'.\n"
     "Choose the single next action from: {actions}\n"
     "Answer with the action only."
 )
@@ -201,8 +203,21 @@ class PickPlaceEnv:
         return p.getBasePositionAndOrientation(self.cubes[color])[0]
 
     def on_tray(self, color: str) -> bool:
+        # z < 0.15 so a cube resting on another cube on the tray still counts.
         x, y, z = self.cube_pos(color)
-        return abs(x - TRAY_POS[0]) < TRAY_HALF and abs(y - TRAY_POS[1]) < TRAY_HALF and z < 0.06 and self.holding != color
+        return abs(x - TRAY_POS[0]) < TRAY_HALF and abs(y - TRAY_POS[1]) < TRAY_HALF and z < 0.15 and self.holding != color
+
+    def tray_contents(self) -> list[str]:
+        return [c for c in COLORS if self.on_tray(c)]
+
+    def free_tray_slot(self) -> tuple[float, float]:
+        # Four slots on the tray so placed cubes sit side by side instead of stacking.
+        d = TRAY_HALF / 2
+        for dx, dy in [(-d, -d), (d, d), (-d, d), (d, -d)]:
+            sx, sy = TRAY_POS[0] + dx, TRAY_POS[1] + dy
+            if all(math.dist((sx, sy), self.cube_pos(c)[:2]) > 0.035 for c in COLORS if c != self.holding):
+                return sx, sy
+        return TRAY_POS
 
     # -- skills
     def _move(self, pos: list[float], steps: int = 200) -> None:
@@ -248,12 +263,13 @@ class PickPlaceEnv:
             if self.holding is None:
                 return "failed: holding nothing"
             color = self.holding
-            self._move([TRAY_POS[0], TRAY_POS[1], 0.25])
-            self._move([TRAY_POS[0], TRAY_POS[1], 0.08], steps=150)
+            sx, sy = self.free_tray_slot()
+            self._move([sx, sy, 0.25])
+            self._move([sx, sy, 0.06], steps=150)
             self._release()
             for _ in range(120):
                 p.stepSimulation()
-            self._move([TRAY_POS[0], TRAY_POS[1], 0.25])
+            self._move([sx, sy, 0.25])
             return f"placed the {color} cube on the tray"
         if action == "put down":
             if self.holding is None:
@@ -388,6 +404,7 @@ def run_episode(
             history=", ".join(show(a) for a in history) if history else "none",
             last_result=last_result,
             holding=f"{env.holding} cube" if env.holding else "nothing",
+            tray=", ".join(f"{c} cube" for c in env.tray_contents()) or "none",
             actions=" | ".join(show(a) for a in allowed),
         )
         decision = policy.act(img_path if isinstance(policy, VLMPolicy) else frame, prompt)
