@@ -9,6 +9,7 @@ import torch
 from .io_utils import load_json
 from .media import get_modality
 from .probes import load_pickle
+from .modeling import join_layer_output, split_layer_output
 from .vector_utils import combined_vectors_from_checkpoint
 
 
@@ -55,7 +56,7 @@ class ImageDefenseController:
 
     def hook(self, layer_idx: int):
         def hook_fn(module, inputs, output):
-            hidden = output[0]
+            hidden, rest = split_layer_output(output)
             if layer_idx == 0:
                 self.step += 1
             last = hidden[:, -1, :]
@@ -75,7 +76,7 @@ class ImageDefenseController:
                     alpha = adaptive_alpha(last, w, b, epsilon).to(hidden.dtype)
                     direction = -w.squeeze() / (torch.norm(w.float()) + 1e-8)
                     hidden[:, -1, :] = hidden[:, -1, :] + alpha.view(-1, 1) * direction.to(hidden.dtype)
-            return (hidden,) + output[1:]
+            return join_layer_output(hidden, rest)
 
         return hook_fn
 

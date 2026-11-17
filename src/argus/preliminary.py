@@ -7,7 +7,7 @@ import numpy as np
 import torch
 
 from .probes import load_pickle
-from .modeling import get_language_layers
+from .modeling import get_language_layers, join_layer_output, split_layer_output
 
 
 class SingleLayerSteeringController:
@@ -28,10 +28,10 @@ class SingleLayerSteeringController:
         def hook_fn(module, inputs, output):
             if layer_idx != self.layer:
                 return output
-            hidden = output[0]
+            hidden, rest = split_layer_output(output)
             vector = self.vector.to(device=hidden.device, dtype=hidden.dtype)
             hidden[:, -1, :] = hidden[:, -1, :] + self.alpha * vector
-            return (hidden,) + output[1:]
+            return join_layer_output(hidden, rest)
 
         return hook_fn
 
@@ -56,10 +56,10 @@ class MultiLayerSteeringController:
 
     def hook(self, layer_idx: int):
         def hook_fn(module, inputs, output):
-            hidden = output[0]
+            hidden, rest = split_layer_output(output)
             vector = self.vectors[layer_idx].to(device=hidden.device, dtype=hidden.dtype)
             hidden[:, -1, :] = hidden[:, -1, :] + self.alpha * vector
-            return (hidden,) + output[1:]
+            return join_layer_output(hidden, rest)
 
         return hook_fn
 

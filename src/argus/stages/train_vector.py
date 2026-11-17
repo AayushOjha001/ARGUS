@@ -14,7 +14,7 @@ from argus.config import cfg_get, get_paths, load_config, resolve_input_path
 from argus.eval_metrics import score_response, summarize_scores
 from argus.io_utils import load_json, save_json, seed_everything
 from argus.media import ensure_image_argus_stage, media_block, poison_media, split_json_path
-from argus.modeling import get_language_layers, set_cuda_device, silence_greedy_sampling_warnings
+from argus.modeling import get_language_layers, join_layer_output, set_cuda_device, silence_greedy_sampling_warnings, split_layer_output
 from argus.vector_utils import LayerMixtureEditor, load_basis_vectors
 
 
@@ -86,7 +86,7 @@ class MultiLayerEditor(nn.Module):
 
     def hook(self, editor_index: int):
         def hook_fn(module, inputs, output):
-            hidden = output[0]
+            hidden, rest = split_layer_output(output)
             vector = self.editors[editor_index].vector(hidden.device, hidden.dtype)
             if self.edit_mask is not None:
                 mask = self.edit_mask.to(hidden.device).unsqueeze(-1).to(hidden.dtype)
@@ -94,7 +94,7 @@ class MultiLayerEditor(nn.Module):
             elif self.generation_enabled:
                 # Early-stop generation uses the inference-time last-token hook.
                 hidden[:, -1, :] = hidden[:, -1, :] + vector
-            return (hidden,) + output[1:]
+            return join_layer_output(hidden, rest)
 
         return hook_fn
 

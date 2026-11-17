@@ -12,6 +12,17 @@ from PIL import Image
 from .media import media_block
 
 
+def split_layer_output(output: Any) -> tuple[torch.Tensor, tuple | None]:
+    """Decoder layers return a tuple in transformers 4.x but a bare tensor in 5.x; hooks must handle both."""
+    if isinstance(output, tuple):
+        return output[0], output[1:]
+    return output, None
+
+
+def join_layer_output(hidden: torch.Tensor, rest: tuple | None) -> Any:
+    return hidden if rest is None else (hidden,) + rest
+
+
 def set_cuda_device(device: str | None) -> None:
     if device is not None and "CUDA_VISIBLE_DEVICES" not in os.environ:
         os.environ["CUDA_VISIBLE_DEVICES"] = str(device)
