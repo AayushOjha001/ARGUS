@@ -13,6 +13,11 @@ If this repo helps your research, please consider giving it a star and citing ou
   <em>* <strong>Note:</strong> The framework diagram in the published paper contains a minor error. Please consider this version as the definitive one.</em>
 </p>
 
+> **Fork addition: closed-loop embodied testbed.** [`embodied/`](embodied/) adds a PyBullet robot
+> simulation where the injected instruction is printed in the scene, plus a ready-to-run
+> Kaggle notebook ([`embodied/kaggle_closed_loop.ipynb`](embodied/kaggle_closed_loop.ipynb)).
+> Steps are in [`embodied/README.md`](embodied/README.md). Everything below is the original ARGUS release.
+
 ## Setup
 
 Create an environment with the packages in `requirements.txt`:

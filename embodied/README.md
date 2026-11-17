@@ -18,8 +18,8 @@ python embodied/closed_loop_pybullet.py --policy oracle-attacker --episodes 3
 
 ## Kaggle (GPU T4, Internet ON)
 
-Easiest: in Kaggle, go to **Create → New Notebook → File → Import Notebook → GitHub** and paste
-`https://github.com/AayushOjha001/ARGUS/blob/main/embodied/kaggle_closed_loop.ipynb`.
+Easiest: in Kaggle, go to **Create → New Notebook → File → Import Notebook**, choose the **URL** tab, and paste
+`https://raw.githubusercontent.com/AayushOjha001/ARGUS/main/embodied/kaggle_closed_loop.ipynb`.
 Or run the steps by hand:
 
 ```python
