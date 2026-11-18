@@ -130,11 +130,11 @@ retraining per modality is expensive.
 | Attention Tracker [hung2024attentiontracker] | text | attention-head distraction | white-box; training-free | ✓ | – | detection only; no training |
 | AdaShield [wang2024adashield] | image | adaptive defense prompt | black-box | – | prompt | prompt-level, jailbreak |
 | ECSO [gou2024ecso] | image | image → caption | black-box | ✓ | ✓ | caption keeps the injected text |
-| MLLM-Protector / ETA / Immune | image | output check + rewrite / aligned decoding | mixed; Immune slows decoding | ✓ | ✓ | harmful-content focus |
-| VLMGuard / VLMShield | image + text | malicious-prompt classifier | black-box | ✓ | – | detection only |
+| MLLM-Protector [pi2024mllmprotector] / ETA [ding2024eta] / Immune [ghosal2025immune] | image | output check + rewrite / aligned decoding | mixed; Immune slows decoding | ✓ | ✓ | harmful-content focus |
+| VLMGuard [fang2026vlmguard] / VLMShield [qi2026vlmshield] | image + text | malicious-prompt classifier | black-box | ✓ | – | detection only |
 | Trust boundary [chang2026trustboundary] | embodied, scene signs | perception agent + judgment agent | black-box; extra calls | ✓ | ✓ | only embodied defense; prompt and agent level |
 | Pictionary [zhang2026renderbeforereading] | text tool outputs | render text as image | black-box | – | ✓ | opposite modality assumption |
-| StruQ / SecAlign / Spotlighting / MELON / CaMeL | text | data/instruction separation, fine-tuning, system design | mixed | mixed | ✓ | assume a separable data channel |
+| StruQ [chen2025struq] / SecAlign [chen2025secalign] / Spotlighting [hines2024spotlighting] / MELON [zhu2025melon] / CaMeL [debenedetti2025camel] | text | data/instruction separation, fine-tuning, system design | mixed | mixed | ✓ | assume a separable data channel |
 
 ---
 
@@ -179,11 +179,11 @@ None of these papers evaluates a representation-level defense.
 
 | Attack | Channel | Attacker access | Matches ARGUS's training/eval data? |
 |---|---|---|---|
-| [bagdasaryan2023abusing], [bailey2024imagehijacks], [yang2026crossmodal] | adversarial pixels / audio | white-box (gradients) | **No.** Not evaluated. |
-| [pathade2025invisible] | steganographic text | black-box | **No.** |
+| Abusing Images & Sounds [bagdasaryan2023abusing], Image Hijacks [bailey2024imagehijacks], Cross-modal PI [yang2026crossmodal] | adversarial pixels / audio | white-box (gradients) | **No.** Not evaluated. |
+| Invisible Injections [pathade2025invisible] | steganographic text | black-box | **No.** |
 | FigStep [gong2025figstep] | typographic image | black-box | **Yes.** Closest to ARGUS's caption-strip images. |
-| VPI-Bench, pop-ups, EIA | GUI screenshots | black-box | **Partly.** Rendered text, but in a GUI domain. |
-| CHAI, PPIA, Paper-hijack, SceneTAP | text physically in the scene | black-box | **No.** This is what [`embodied/`](../embodied/) tests. |
+| VPI-Bench [cao2026vpibench], Pop-ups [zhang2025popups], EIA [liao2025eia] | GUI screenshots | black-box | **Partly.** Rendered text, but in a GUI domain. |
+| CHAI [burbano2025chai], PPIA [ling2026ppia], Paper-hijack [samarakoon2026hijacking], SceneTAP [cao2024scenetap] | text physically in the scene | black-box | **No.** This is what [`embodied/`](../embodied/) tests. |
 
 ---
 
