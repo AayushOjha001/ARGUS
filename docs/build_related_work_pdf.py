@@ -126,6 +126,7 @@ def inline(text):
 
     text = re.sub(r"\[([A-Za-z0-9_]+(?:\s*,\s*[A-Za-z0-9_]+)*)\]", cite, text)
     text = esc(text)
+    text = re.sub(r"&lt;(/?)(sub|super|sup)&gt;", lambda m: f"<{m.group(1)}{'super' if m.group(2) != 'sub' else 'sub'}>", text)
     text = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", text)
     text = re.sub(r"(?<![*\w])\*(?!\s)(.+?)(?<!\s)\*(?![*\w])", r"<i>\1</i>", text)
     text = text.replace("✓", '<font name="Sym">✓</font>')
@@ -160,7 +161,8 @@ def build_table(rows, width):
         ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
     ]
     for i, r in enumerate(body, start=1):
-        if r and "ARGUS" in r[0] and "lu2026argus" in r[0]:
+        first = r[0].replace("*", "").strip() if r else ""
+        if first == "ARGUS" or ("ARGUS" in first and "lu2026argus" in first):
             style.append(("BACKGROUND", (0, i), (-1, i), ARGUS_BG))
         elif i % 2 == 0:
             style.append(("BACKGROUND", (0, i), (-1, i), ZEBRA))
@@ -205,6 +207,7 @@ story = []
 para, quote, table, lst = [], [], [], []
 title_done = False
 pending_heading = None  # heading kept together with a following table
+last_heading_idx = None  # story index of the most recent heading
 
 
 def flush_para():
@@ -233,17 +236,25 @@ def flush_list():
 
 
 def flush_table():
-    global pending_heading
+    global pending_heading, last_heading_idx
     if not table:
         return
     rows = [split_row(l) for l in table if not re.match(r"^\s*\|?\s*:?-{2,}", l)]
-    wide = len(rows[0]) >= 5
+    # landscape only when the table is genuinely wide (many columns of long text)
+    avg_row_chars = sum(len(" ".join(r)) for r in rows) / len(rows)
+    wide = len(rows[0]) >= 5 and avg_row_chars > 120
     flow = build_table(rows, LAND_W if wide else PORTRAIT_W)
     if wide:
+        # move the section heading and its short intro onto the landscape page
+        carried = []
+        if pending_heading is None and last_heading_idx is not None and len(story) - last_heading_idx <= 4:
+            carried = story[last_heading_idx:]
+            del story[last_heading_idx:]
         story.append(NextPageTemplate("landscape"))
         story.append(PageBreak())
         if pending_heading is not None:
             story.append(pending_heading)
+        story.extend(carried)
         story.append(flow)
         story.append(NextPageTemplate("portrait"))
         story.append(PageBreak())
@@ -253,6 +264,7 @@ def flush_table():
         story.append(flow)
         story.append(Spacer(1, 8))
     pending_heading = None
+    last_heading_idx = None
     table.clear()
 
 
@@ -292,6 +304,7 @@ while i < len(lines):
         if j < len(lines) and lines[j].strip().startswith("|"):
             pending_heading = heading
         else:
+            last_heading_idx = len(story)
             story.append(heading)
     elif s.startswith(">"):
         flush_para(); flush_list()
