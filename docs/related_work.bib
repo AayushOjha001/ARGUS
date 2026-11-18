@@ -1,0 +1,348 @@
+% Related work for ARGUS and its closed-loop embodied extension.
+% Titles/authors/dates for every entry with an `eprint` were checked against the
+% arXiv abstract page on 2026-11-18. Venues are given only where the arXiv record
+% (comments / journal-ref) or the venue's own site states them.
+% Entries marked TODO have no public author list yet (2026 conference listings).
+
+% ---------------------------------------------------------------- ARGUS itself
+@inproceedings{lu2026argus,
+  title     = {{ARGUS}: Defending Against Multimodal Indirect Prompt Injection via Steering Instruction-Following Behavior},
+  author    = {Lu, Weikai and Zeng, Ziqian and Zhang, Kehua and Li, Haoran and Zhuang, Huiping and Wang, Ruidong and Chen, Cen and Peng, Hao},
+  booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+  year      = {2026},
+  eprint    = {2512.05745},
+  archivePrefix = {arXiv}
+}
+
+% ------------------------------------------- Activation / representation defenses
+@inproceedings{wang2025astra,
+  title     = {Steering Away from Harm: An Adaptive Approach to Defending Vision Language Model Against Jailbreaks},
+  author    = {Wang, Han and Wang, Gang and Zhang, Huan},
+  booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+  pages     = {29947--29957},
+  year      = {2025},
+  eprint    = {2411.16721},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{abdelnabi2025tasktracker,
+  title     = {Get my drift? Catching {LLM} Task Drift with Activation Deltas},
+  author    = {Abdelnabi, Sahar and Fay, Aideen and Cherubin, Giovanni and Salem, Ahmed and Fritz, Mario and Paverd, Andrew},
+  booktitle = {IEEE Conference on Secure and Trustworthy Machine Learning (SaTML)},
+  year      = {2025},
+  eprint    = {2406.00799},
+  archivePrefix = {arXiv}
+}
+
+@misc{hung2024attentiontracker,
+  title     = {Attention Tracker: Detecting Prompt Injection Attacks in {LLMs}},
+  author    = {Hung, Kuo-Han and Ko, Ching-Yun and Rawat, Ambrish and Chung, I-Hsin and Hsu, Winston H. and Chen, Pin-Yu},
+  year      = {2024},
+  eprint    = {2411.00348},
+  archivePrefix = {arXiv}
+}
+
+@misc{wen2025instructdetector,
+  title     = {Defending against Indirect Prompt Injection by Instruction Detection},
+  author    = {Wen, Tongyu and Wang, Chenglong and Yang, Xiyuan and Tang, Haoyu and Xie, Yueqi and Lyu, Lingjuan and Dou, Zhicheng and Wu, Fangzhao},
+  year      = {2025},
+  eprint    = {2505.06311},
+  archivePrefix = {arXiv}
+}
+
+@misc{wang2026icon,
+  title     = {{ICON}: Indirect Prompt Injection Defense for Agents based on Inference-Time Correction},
+  author    = {Wang, Che and Zhang, Fuyao and Zhang, Jiaming and Zhang, Ziqi and Wang, Yinghui and Huang, Longtao and Gao, Jianbo and Chen, Zhong and Lim, Wei Yang Bryan},
+  year      = {2026},
+  eprint    = {2602.20708},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{anon2026overwrites,
+  title     = {Do Large Language Models Encode Instruction Overwrites?},
+  author    = {{Anonymous}},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2026},
+  url       = {https://iclr.cc/virtual/2026/10022274},
+  note      = {TODO: fill in authors once public}
+}
+
+@inproceedings{anon2026probingsteering,
+  title     = {Probing and Steering Prompt Injection Compliance},
+  author    = {{Anonymous}},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2026},
+  url       = {https://neurips.cc/virtual/2026/168286},
+  note      = {TODO: fill in authors once public}
+}
+
+@inproceedings{anon2026toolpoisoning,
+  title     = {Activation Steering for Tool-Poisoning Defense in Language-Model Agents},
+  author    = {{Anonymous}},
+  booktitle = {International Conference on Machine Learning (ICML)},
+  year      = {2026},
+  url       = {https://icml.cc/virtual/2026/67853},
+  note      = {TODO: fill in authors once public}
+}
+
+@misc{zeng2025whoisincharge,
+  title     = {Who is In Charge? Dissecting Role Conflicts in Instruction Following},
+  author    = {Zeng, Siqi},
+  year      = {2025},
+  eprint    = {2510.01228},
+  archivePrefix = {arXiv},
+  note      = {Mechanistic Interpretability Workshop, NeurIPS 2025}
+}
+
+@misc{kale2026probes,
+  title     = {Prompt-Injection Probes Learn the Conversation, Not Just the Injection},
+  author    = {Kale, Kaan and Vishwanath, Sriram},
+  year      = {2026},
+  eprint    = {2610.18408},
+  archivePrefix = {arXiv}
+}
+
+% ------------------------------------------------ MLLM input/output-level defenses
+@misc{wang2024adashield,
+  title     = {{AdaShield}: Safeguarding Multimodal Large Language Models from Structure-based Attack via Adaptive Shield Prompting},
+  author    = {Wang, Yu and Liu, Xiaogeng and Li, Yu and Chen, Muhao and Xiao, Chaowei},
+  year      = {2024},
+  eprint    = {2403.09513},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{gou2024ecso,
+  title     = {Eyes Closed, Safety On: Protecting Multimodal {LLMs} via Image-to-Text Transformation},
+  author    = {Gou, Yunhao and Chen, Kai and Liu, Zhili and Hong, Lanqing and Xu, Hang and Li, Zhenguo and Yeung, Dit-Yan and Kwok, James T. and Zhang, Yu},
+  booktitle = {European Conference on Computer Vision (ECCV)},
+  year      = {2024},
+  eprint    = {2403.09572},
+  archivePrefix = {arXiv}
+}
+
+@misc{pi2024mllmprotector,
+  title     = {{MLLM-Protector}: Ensuring {MLLM}'s Safety without Hurting Performance},
+  author    = {Pi, Renjie and Han, Tianyang and Zhang, Jianshu and Xie, Yueqi and Pan, Rui and Lian, Qing and Dong, Hanze and Zhang, Jipeng and Zhang, Tong},
+  year      = {2024},
+  eprint    = {2401.02906},
+  archivePrefix = {arXiv}
+}
+
+@misc{ding2024eta,
+  title     = {{ETA}: Evaluating Then Aligning Safety of Vision Language Models at Inference Time},
+  author    = {Ding, Yi and Li, Bolian and Zhang, Ruqi},
+  year      = {2024},
+  eprint    = {2410.06625},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{ghosal2025immune,
+  title     = {Immune: Improving Safety Against Jailbreaks in Multi-modal {LLMs} via Inference-Time Alignment},
+  author    = {Ghosal, Soumya Suvra and Chakraborty, Souradip and Singh, Vaibhav and Guan, Tianrui and Wang, Mengdi and Velasquez, Alvaro and Beirami, Ahmad and Huang, Furong and Manocha, Dinesh and Bedi, Amrit Singh},
+  booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+  year      = {2025},
+  eprint    = {2411.18688},
+  archivePrefix = {arXiv}
+}
+
+@article{fang2026vlmguard,
+  title     = {{VLMGuard}: Bootstrapping Malicious Prompt Detectors from Unlabeled Vision-Language Prompts in the Wild},
+  author    = {Fang, Junlin and Chen, Wenyu and Ghosh, Reshmi and Sim, Robert and Salem, Ahmed and Carvalho, Vitor R. and Lawton, Emily and Li, Sharon and Stokes, Jack W. and Du, Sean},
+  journal   = {Transactions on Machine Learning Research},
+  year      = {2026},
+  eprint    = {2410.00296},
+  archivePrefix = {arXiv}
+}
+
+@misc{qi2026vlmshield,
+  title     = {{VLMShield}: Efficient and Robust Defense of Vision-Language Models against Malicious Prompts},
+  author    = {Qi, Peigui and Tang, Kunsheng and Yu, Yanpu and Wu, Jialin and Song, Yide and Zhou, Wenbo and Huang, Zhicong and Hong, Cheng and Zhang, Weiming and Yu, Nenghai},
+  year      = {2026},
+  eprint    = {2604.06502},
+  archivePrefix = {arXiv}
+}
+
+@misc{chang2026trustboundary,
+  title     = {If you're waiting for a sign... that might not be it! Mitigating Trust Boundary Confusion from Visual Injections on Vision-Language Agentic Systems},
+  author    = {Chang, Jiamin and Xue, Minhui and Sun, Ruoxi and Pang, Shuchao and Kanhere, Salil S. and Pearce, Hammond},
+  year      = {2026},
+  eprint    = {2604.19844},
+  archivePrefix = {arXiv}
+}
+
+@misc{zhang2026renderbeforereading,
+  title     = {Render Before Reading: Visual Rendering as a Prompt Injection Defense},
+  author    = {Zhang, Jie and Baroian, Andrei and van Rijn, Jan N. and Shafran, Avital and Tram{\`e}r, Florian},
+  year      = {2026},
+  eprint    = {2609.36121},
+  archivePrefix = {arXiv}
+}
+
+% ------------------------------------------------------ Text-only IPI defenses
+@inproceedings{chen2025struq,
+  title     = {{StruQ}: Defending Against Prompt Injection with Structured Queries},
+  author    = {Chen, Sizhe and Piet, Julien and Sitawarin, Chawin and Wagner, David},
+  booktitle = {USENIX Security Symposium},
+  year      = {2025},
+  eprint    = {2402.06363},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{chen2025secalign,
+  title     = {{SecAlign}: Defending Against Prompt Injection with Preference Optimization},
+  author    = {Chen, Sizhe and Zharmagambetov, Arman and Mahloujifar, Saeed and Chaudhuri, Kamalika and Wagner, David and Guo, Chuan},
+  booktitle = {ACM Conference on Computer and Communications Security (CCS)},
+  year      = {2025},
+  eprint    = {2410.05451},
+  archivePrefix = {arXiv}
+}
+
+@misc{hines2024spotlighting,
+  title     = {Defending Against Indirect Prompt Injection Attacks With Spotlighting},
+  author    = {Hines, Keegan and Lopez, Gary and Hall, Matthew and Zarfati, Federico and Zunger, Yonatan and Kiciman, Emre},
+  year      = {2024},
+  eprint    = {2403.14720},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{zhu2025melon,
+  title     = {{MELON}: Provable Defense Against Indirect Prompt Injection Attacks in {AI} Agents},
+  author    = {Zhu, Kaijie and Yang, Xianjun and Wang, Jindong and Guo, Wenbo and Wang, William Yang},
+  booktitle = {International Conference on Machine Learning (ICML)},
+  year      = {2025},
+  eprint    = {2502.05174},
+  archivePrefix = {arXiv}
+}
+
+@misc{debenedetti2025camel,
+  title     = {Defeating Prompt Injections by Design},
+  author    = {Debenedetti, Edoardo and Shumailov, Ilia and Fan, Tianqi and Hayes, Jamie and Carlini, Nicholas and Fabian, Daniel and Kern, Christoph and Shi, Chongyang and Terzis, Andreas and Tram{\`e}r, Florian},
+  year      = {2025},
+  eprint    = {2503.18813},
+  archivePrefix = {arXiv}
+}
+
+% ------------------------------------------- Multimodal prompt-injection attacks
+@misc{bagdasaryan2023abusing,
+  title     = {Abusing Images and Sounds for Indirect Instruction Injection in Multi-Modal {LLMs}},
+  author    = {Bagdasaryan, Eugene and Hsieh, Tsung-Yin and Nassi, Ben and Shmatikov, Vitaly},
+  year      = {2023},
+  eprint    = {2307.10490},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{bailey2024imagehijacks,
+  title     = {Image Hijacks: Adversarial Images can Control Generative Models at Runtime},
+  author    = {Bailey, Luke and Ong, Euan and Russell, Stuart and Emmons, Scott},
+  booktitle = {International Conference on Machine Learning (ICML)},
+  series    = {PMLR},
+  volume    = {235},
+  year      = {2024},
+  eprint    = {2309.00236},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{gong2025figstep,
+  title     = {{FigStep}: Jailbreaking Large Vision-Language Models via Typographic Visual Prompts},
+  author    = {Gong, Yichen and Ran, Delong and Liu, Jinyuan and Wang, Conglei and Cong, Tianshuo and Wang, Anyu and Duan, Sisi and Wang, Xiaoyun},
+  booktitle = {AAAI Conference on Artificial Intelligence},
+  year      = {2025},
+  eprint    = {2311.05608},
+  archivePrefix = {arXiv}
+}
+
+@misc{pathade2025invisible,
+  title     = {Invisible Injections: Exploiting Vision-Language Models Through Steganographic Prompt Embedding},
+  author    = {Pathade, Chetan},
+  year      = {2025},
+  eprint    = {2507.22304},
+  archivePrefix = {arXiv}
+}
+
+@misc{yang2026crossmodal,
+  title     = {A Cross-Modal Prompt Injection Attack against Large Vision-Language Models with Image-Only Perturbation},
+  author    = {Yang, Hao and Ma, Zhuo and Liu, Yang and Yang, Yilong and Wang, Guancheng and Ma, JianFeng},
+  year      = {2026},
+  eprint    = {2605.16090},
+  archivePrefix = {arXiv}
+}
+
+@misc{balakrishnan2026readingpixels,
+  title     = {Reading Between the Pixels: Linking Text-Image Embedding Alignment to Typographic Attack Success on Vision-Language Models},
+  author    = {Balakrishnan, Ravikumar and Mendapara, Sanket and Garg, Ankit},
+  year      = {2026},
+  eprint    = {2604.12371},
+  archivePrefix = {arXiv},
+  note      = {ICLR 2026 Workshop on Agents in the Wild}
+}
+
+% ----------------------------------------------- GUI / web-agent visual injection
+@inproceedings{cao2026vpibench,
+  title     = {{VPI-Bench}: Visual Prompt Injection Attacks for Computer-Use Agents},
+  author    = {Cao, Tri and Lim, Bennett and Liu, Yue and Sui, Yuan and Li, Yuexin and Deng, Shumin and Lu, Lin and Oo, Nay and Yan, Shuicheng and Hooi, Bryan},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2026},
+  eprint    = {2506.02456},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{zhang2025popups,
+  title     = {Attacking Vision-Language Computer Agents via Pop-ups},
+  author    = {Zhang, Yanzhe and Yu, Tao and Yang, Diyi},
+  booktitle = {Annual Meeting of the Association for Computational Linguistics (ACL)},
+  year      = {2025},
+  eprint    = {2411.02391},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{liao2025eia,
+  title     = {{EIA}: Environmental Injection Attack on Generalist Web Agents for Privacy Leakage},
+  author    = {Liao, Zeyi and Mo, Lingbo and Xu, Chejian and Kang, Mintong and Zhang, Jiawei and Xiao, Chaowei and Tian, Yuan and Li, Bo and Sun, Huan},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2025},
+  eprint    = {2409.11295},
+  archivePrefix = {arXiv}
+}
+
+% --------------------------------------------- Physical / embodied injection attacks
+@misc{burbano2025chai,
+  title     = {{CHAI}: Command Hijacking against embodied {AI}},
+  author    = {Burbano, Luis and Ortiz, Diego and Sun, Qi and Yang, Siwei and Tu, Haoqin and Xie, Cihang and Cao, Yinzhi and Cardenas, Alvaro A.},
+  year      = {2025},
+  eprint    = {2510.00181},
+  archivePrefix = {arXiv},
+  note      = {Accepted at IEEE SaTML}
+}
+
+@misc{ling2026ppia,
+  title     = {Physical Prompt Injection Attacks on Large Vision-Language Models},
+  author    = {Ling, Chen and Hu, Kai and Liu, Hangcheng and Han, Xingshuo and Zhang, Tianwei and Ou, Changhai},
+  year      = {2026},
+  eprint    = {2601.17383},
+  archivePrefix = {arXiv}
+}
+
+@misc{samarakoon2026hijacking,
+  title     = {Hijacking Robots with a Piece of Paper: A Systematic Study of Physical Prompt Injection in {VLM}-Controlled Robots},
+  author    = {Samarakoon, S. M. Bhagya P. and Muthugala, M. A. Viraj J. and Sachinthana, W. K. R. and Elara, Mohan Rajesh},
+  year      = {2026},
+  eprint    = {2608.05715},
+  archivePrefix = {arXiv}
+}
+
+@misc{cao2024scenetap,
+  title     = {{SceneTAP}: Scene-Coherent Typographic Adversarial Planner against Vision-Language Models in Real-World Environments},
+  author    = {Cao, Yue and Xing, Yun and Zhang, Jie and Lin, Di and Zhang, Tianwei and Tsang, Ivor and Liu, Yang and Guo, Qing},
+  year      = {2024},
+  eprint    = {2412.00114},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{zhang2025badrobot,
+  title     = {{BadRobot}: Jailbreaking Embodied {LLM} Agents in the Physical World},
+  author    = {Zhang, Hangtao and Zhu, Chenyu and Wang, Xianlong and Zhou, Ziqi and Yin, Changgan and Li, Minghui and Xue, Lulu and Wang, Yichen and Hu, Shengshan and Liu, Aishan and Guo, Peijin and Zhang, Leo Yu},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2025},
+  eprint    = {2407.20242},
+  archivePrefix = {arXiv}
+}
