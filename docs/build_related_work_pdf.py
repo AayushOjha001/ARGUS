@@ -48,6 +48,8 @@ S = {
                             borderPadding=(6, 8, 6, 8), leftIndent=8, rightIndent=8, spaceBefore=4, spaceAfter=10),
     "cell": ParagraphStyle("cell", fontName="Body", fontSize=7.6, leading=9.6, textColor=INK),
     "cellh": ParagraphStyle("cellh", fontName="Body-Bold", fontSize=7.8, leading=9.8, textColor=ACCENT),
+    "cellc": ParagraphStyle("cellc", fontName="Body", fontSize=7.1, leading=8.7, textColor=INK),
+    "cellhc": ParagraphStyle("cellhc", fontName="Body-Bold", fontSize=7.3, leading=9, textColor=ACCENT),
     "ref": ParagraphStyle("ref", fontName="Body", fontSize=8, leading=10.6, textColor=INK, leftIndent=20, bulletIndent=0, spaceAfter=2.5, bulletFontName="Body", bulletFontSize=8),
 }
 
@@ -63,6 +65,7 @@ def parse_bib(text):
 
 def tex_clean(s):
     s = s.replace("{\\`e}", "è").replace("\\`e", "è").replace("--", "–")
+    s = s.replace('{\\"a}', "ä").replace('{\\"o}', "ö").replace('{\\"u}', "ü")
     return re.sub(r"[{}]", "", s)
 
 
@@ -75,6 +78,8 @@ def format_authors(raw):
             out.append(f"{first} {last}")
         else:
             out.append(n)
+    if out and out[-1] == "others":
+        return ", ".join(out[:-1]) + ", et al."
     if len(out) > 6:
         return ", ".join(out[:6]) + ", et al."
     return ", ".join(out)
@@ -137,7 +142,7 @@ def inline(text):
 
 
 # ------------------------------------------------------------------ tables
-def build_table(rows, width):
+def build_table(rows, width, compact=False):
     header, body = rows[0], rows[1:]
     ncol = len(header)
     # weight columns by the longest text they hold
@@ -145,10 +150,11 @@ def build_table(rows, width):
     weights = [min(max(l, 11), 90) ** 0.75 for l in lens]
     total = sum(weights)
     widths = [width * w / total for w in weights]
-    data = [[Paragraph(inline(c), S["cellh"]) for c in header]]
+    cs, hs = (S["cellc"], S["cellhc"]) if compact else (S["cell"], S["cellh"])
+    data = [[Paragraph(inline(c), hs) for c in header]]
     for r in body:
         r = r + [""] * (ncol - len(r))
-        data.append([Paragraph(inline(c), S["cell"]) for c in r])
+        data.append([Paragraph(inline(c), cs) for c in r])
     t = LongTable(data, colWidths=widths, repeatRows=1)
     style = [
         ("BACKGROUND", (0, 0), (-1, 0), HEAD_BG),
@@ -157,8 +163,8 @@ def build_table(rows, width):
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
         ("LEFTPADDING", (0, 0), (-1, -1), 4),
         ("RIGHTPADDING", (0, 0), (-1, -1), 4),
-        ("TOPPADDING", (0, 0), (-1, -1), 3),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+        ("TOPPADDING", (0, 0), (-1, -1), 2 if compact else 3),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 2 if compact else 3),
     ]
     for i, r in enumerate(body, start=1):
         first = r[0].replace("*", "").strip() if r else ""
@@ -243,7 +249,7 @@ def flush_table():
     # landscape only when the table is genuinely wide (many columns of long text)
     avg_row_chars = sum(len(" ".join(r)) for r in rows) / len(rows)
     wide = len(rows[0]) >= 5 and avg_row_chars > 120
-    flow = build_table(rows, LAND_W if wide else PORTRAIT_W)
+    flow = build_table(rows, LAND_W if wide else PORTRAIT_W, compact=wide)
     if wide:
         # move the section heading and its short intro onto the landscape page
         carried = []
