@@ -54,8 +54,11 @@ multimodal relative. It builds steering vectors by ablating visual tokens of
 adversarial images and projects activations away from the harmful direction at
 inference. ASTRA targets *jailbreaks* (eliciting harmful content), whereas ARGUS
 targets *task hijacking*, where the output may be harmless but is not what the user
-asked for. ASTRA is also always on, while ARGUS gates the intervention behind a detector
-and verifies it afterwards.
+asked for. ASTRA has no separate detector: its steering hook runs on every generated token,
+and a built-in condition (is the activation pointing toward the harmful
+direction?) decides how hard to push, often not at all on benign inputs. ARGUS
+instead uses a trained probe to decide once, at prefill, whether to intervene,
+and checks the result afterwards with a second probe.
 
 **Other activation-level defenses for VLM jailbreaks.** HiddenDetect
 [jiang2025hiddendetect] (ACL 2025) monitors hidden states for safety-relevant
@@ -207,7 +210,7 @@ control rates.
 | Method | Modalities | Mechanism | Access / training | Detects | Repairs | Main difference from ARGUS |
 |---|---|---|---|:-:|:-:|---|
 | **ARGUS** [lu2026argus] | image, video, audio | probe → utility-decoupled adaptive steering → post-filter | white-box; probes + vectors per model | ✓ | ✓ | — |
-| ASTRA [wang2025astra] | image | ablation-derived steering vectors, projection | white-box; few forward passes | – | ✓ | jailbreak, not IPI; always on |
+| ASTRA [wang2025astra] | image | ablation-derived steering vectors, conditional projection | white-box; few forward passes | – | ✓ | jailbreak, not IPI; no detector, condition built into the steering formula |
 | HiddenDetect [jiang2025hiddendetect] | image | hidden-state safety monitor | white-box; training-free | ✓ | – | jailbreak; detection only |
 | ShiftDC [zou2025shiftdc] | image | remove modality-induced activation shift | white-box; training-free | – | ✓ | jailbreak, not IPI |
 | NullSteer [zhu2026nullsteer] | image | refusal steering in the null space of benign activations | white-box | – | ✓ | jailbreak; refuses rather than repairing the task |
