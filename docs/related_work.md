@@ -329,174 +329,167 @@ instructions hidden in its inputs. The two surveys above index that work.
 
 ---
 
-## 4. Reported metrics: where ARGUS stands out
+## 4. Metric comparison (focused)
 
-> **Read this first.** Every number below is copied from the paper that reports it.
-> Each paper uses its own models, benchmark, attack set and metric definition. Only
-> the numbers *inside* §4.2 are measured under the same conditions. Use §4.3–§4.4 to
-> see the scale of effects in each setting, not to rank methods against each other.
+This section compares ARGUS only with defenses that solve the **same problem**: a
+vision-language model reading instructions or misleading text **inside an image or a
+physical scene**. Text-only defenses and jailbreak-only defenses are left out, because
+they cover a narrower problem than ARGUS. Their numbers remain in Appendix A.
 
-### 4.1 Metrics used
+> **Read this first.** Only the numbers in §4.2 come from one shared test (ARGUS's own
+> paper). Every row in §4.3 and §4.4 comes from a different paper, with its own models,
+> attacks and scoring. They show the size of each effect, not a ranking.
 
-- **ASR (attack success rate):** share of attacked inputs where the attacker's goal
-  is achieved. Lower is better for a defense.
-- **ARGUS's names for it:** **AIA** (Attacker Instruction Accuracy) counts outputs
-  that contain the attacker's expected answer, the strict equivalent of ASR.
-  **AIFR** (Attacker Instruction Following Rate) counts *any attempt* to follow the
-  injection, even an incorrect one. The paper's Table 1 labels it "AIFA".
-- **UIA (User Instruction Accuracy):** share of outputs that correctly do the
-  user's task. ARGUS reports it on injected inputs (**UIA<sub>inject</sub>**,
-  "does the user still get an answer under attack") and on clean inputs
-  (**UIA<sub>clean</sub>**, "does the defense hurt normal use").
-- **Detection metrics:** AUROC or accuracy of flagging injected inputs. These say
-  nothing about whether the final answer is correct.
-- **Jailbreak papers** (ASTRA, ECSO, ETA, Immune) measure harmful-content rates or
-  toxicity, not task hijacking.
+### 4.1 Metrics and abbreviations
 
-### 4.2 ARGUS against its own baselines (same benchmark)
+**Metrics**
 
-Values are AIA↓ / UIA<sub>inject</sub>↑ / UIA<sub>clean</sub>↑ in %. Image and video
-use Qwen2-VL-7B; audio uses Kimi-Audio-7B. The last column is extra inference time
-per sample in ms (image / video / audio). Source: ARGUS Table 1 [lu2026argus].
+| Abbreviation | Full name | What it counts | Better when |
+|---|---|---|---|
+| AIA | Attacker Instruction Accuracy | share of attacked samples whose answer contains the attacker's expected answer (ARGUS's attack-success measure) | lower |
+| AIFR | Attacker Instruction Following Rate | share of attacked samples where the model *tries* to follow the injected instruction, even if it gets it wrong | lower |
+| UIA | User Instruction Accuracy | share of samples where the model correctly answers the user's real question | higher |
+| UIA<sub>inject</sub> | User Instruction Accuracy on injected inputs | UIA while the attack is present: does the user still get their answer? | higher |
+| UIA<sub>clean</sub> | User Instruction Accuracy on clean inputs | UIA with no attack: does the defense hurt normal use? | higher |
+| ASR | Attack Success Rate | share of attacked trials where the attacker's goal is reached | lower |
+| — | Defense effectiveness | 1 − (ASR with defense ÷ ASR without defense); 100% means every attack is stopped | higher |
+| M Avg | Misleading-goal score | share of *misleading* signs the agent obeys (trust-boundary paper) | lower |
+| H Avg | Helpful-goal score | share of *helpful* signs, such as a safety notice, the agent obeys | higher |
+| RR | Recovery Rate | share of attack-caused errors that the defense fixes (QuISE paper) | higher |
+| HR | Harm Rate | share of correct answers that the defense breaks (QuISE paper) | lower |
 
-| Approach | Image | Video | Audio | Extra time (ms) |
-|---|---|---|---|---|
-| No defense | 25.1 / 30.9 / 49.6 | 28.2 / 25.4 / 37.6 | 12.6 / 45.6 / 65.7 | 0 / 0 / 0 |
-| System prompt | 10.7 / 38.2 / 42.7 | 26.9 / 25.4 / 37.0 | 27.9 / 7.5 / 63.8 | 6 / 15 / 5 |
-| Ignore prompt | 31.5 / 24.5 / 49.4 | 32.9 / 21.8 / 36.1 | 28.0 / 24.3 / 65.7 | 2 / 3 / 2 |
-| Gaussian noise | 7.6 / 34.3 / 46.8 | 9.6 / 18.7 / 23.3 | 0.0 / 42.8 / 41.0 | 1 / 2 / 2 |
-| Removal (editing model) | 0.0 / 48.5 / 49.3 | 1.5 / 32.5 / 32.9 | n/a | 12,885 / 574,121 / n/a |
-| Adversarial training (DPO) | 2.3 / 41.1 / 40.7 | 1.6 / 35.9 / 37.2 | 1.4 / 55.8 / 60.9 | 0 / 0 / 0 |
-| **ARGUS** | **0.1 / 46.3 / 49.6** | **0.1 / 37.8 / 37.6** | **0.0 / 58.0 / 65.7** | 3 / 6 / 4 |
-| ARGUS without post-filter | 4.3 / 46.4 / 49.6 | 0.8 / 38.5 / 37.6 | 1.0 / 58.2 / 65.7 | 3 / 6 / 4 |
+**Other abbreviations**
 
-On three more models (ARGUS Table 3), ARGUS reaches AIA 0.0% on InternVL3.5-8B
-(image, from 8.6%), 0.2% on Qwen2.5-VL-7B (video, from 15.4%) and 0.0% on
-Qwen2-Audio-7B (audio, from 6.4%), with UIA<sub>clean</sub> within 0.2 points of no
-defense in each case.
+| Abbreviation | Full name |
+|---|---|
+| IPI | Indirect Prompt Injection: instructions hidden in content the model reads, not typed by the user |
+| VLM / MLLM | Vision-Language Model / Multimodal Large Language Model |
+| OCR | Optical Character Recognition (finding and reading text in an image) |
+| TTS | Text-To-Speech |
+| DPO | Direct Preference Optimization (a fine-tuning method) |
+| PGD | Projected Gradient Descent (an attack that optimizes image pixels) |
+| GCG | Greedy Coordinate Gradient (an attack that optimizes text tokens) |
+| CUA / BUA | Computer-Use Agent / Browser-Use Agent |
 
-What the table shows:
+### 4.2 ARGUS against its own baselines (same test, directly comparable)
 
-- **Only ARGUS gets near-zero attack success and unchanged clean accuracy in all
-  three modalities.** Every other row gives up one of the two. Prompt defenses
-  are inconsistent: the system prompt cuts image AIA to 10.7 but raises audio AIA
-  (12.6 → 27.9) and collapses audio UIA<sub>inject</sub> to 7.5; the "ignore" prompt
-  makes image AIA worse (25.1 → 31.5). Noise and Removal hurt clean accuracy on video (37.6 → 23.3 and
-  32.9). Adversarial training lowers clean image accuracy (49.6 → 40.7).
-- **Clean accuracy is untouched because of the detection gate.** On clean inputs the
-  detector rarely fires, so the model runs unmodified (the paper reports near-100%
-  detection accuracy).
-- **ARGUS repairs the answer rather than refusing.** UIA<sub>inject</sub> rises above
-  no defense (image 30.9 → 46.3; video 25.4 → 37.8): the user's task is still
-  done under attack.
-- **Cost:** 3–6 ms per sample, against 12.9 s (image) and 574 s (video) for
-  Removal, and no weight change, unlike adversarial training.
-- **The post-filter trades a little utility for safety:** without it, image AIA
-  rises from 0.1 to 4.3.
+Image and video use Qwen2-VL-7B; audio uses Kimi-Audio-7B. All values in %, except
+time. Source: ARGUS Table 1 [lu2026argus].
 
-### 4.3 Headline results of other defenses (each in its own setting)
+| Defense | Image: attack success (AIA) ↓ | Image: user answered under attack (UIA<sub>inject</sub>) ↑ | Image: normal accuracy (UIA<sub>clean</sub>) ↑ | Video: attack success (AIA) ↓ | Audio: attack success (AIA) ↓ | Extra time per image (ms) |
+|---|---|---|---|---|---|---|
+| No defense | 25.1 | 30.9 | 49.6 | 28.2 | 12.6 | 0 |
+| System prompt warning | 10.7 | 38.2 | 42.7 | 26.9 | 27.9 | 6 |
+| Gaussian noise on the media | 7.6 | 34.3 | 46.8 | 9.6 | 0.0 | 1 |
+| Removal (an editing model erases the text) | 0.0 | 48.5 | 49.3 | 1.5 | n/a | 12,885 |
+| Adversarial training (DPO fine-tuning) | 2.3 | 41.1 | 40.7 | 1.6 | 1.4 | 0 |
+| **ARGUS** | **0.1** | **46.3** | **49.6** | **0.1** | **0.0** | **3** |
 
-"Before → after" is the undefended → defended value reported by each paper.
+- **ARGUS is the only row with near-zero attack success *and* unchanged normal
+  accuracy.** Removal matches it on images but takes about 13 seconds per image
+  (574 seconds per video) and has no audio version. Adversarial training lowers normal
+  image accuracy from 49.6 to 40.7.
+- **Same pattern on video and audio.** Normal accuracy stays equal to no defense
+  (video 37.6, audio 65.7), and the user is answered more often under attack (video
+  25.4 → 37.8, audio 45.6 → 58.0).
+- **Prompt warnings are unreliable.** The system prompt *raises* audio attack success
+  (12.6 → 27.9).
+- **The post-filter matters.** Without the layer-20 check, image attack success rises
+  from 0.1 to 4.3.
+- **Three more models** (ARGUS Table 3): attack success ends at 0.0% on InternVL3.5-8B
+  (image), 0.2% on Qwen2.5-VL-7B (video) and 0.0% on Qwen2-Audio-7B (audio).
 
-| Defense | Threat · setting | Attack metric, before → after | Utility / side effect | Adaptive attack reported? |
-|---|---|---|---|---|
-| **ARGUS** [lu2026argus] | multimodal IPI · Qwen2-VL-7B, own benchmark | AIA 25.1 → 0.1 (image), 28.2 → 0.1 (video), 12.6 → 0.0 (audio) | UIA<sub>clean</sub> unchanged; +3–6 ms | **No.** The paper argues it is hard to bypass without weight access. |
-| ASTRA [wang2025astra] | VLM jailbreak, adversarial images · Qwen2-VL | jailbreak ASR 67–76 → 5–18 | "little performance drop" on benign inputs | **Yes:** with full knowledge, ASR 58–69 on Qwen2-VL, 14–25 on MiniGPT-4 |
-| Trust boundary [chang2026trustboundary] | embodied scene signs · GPT-4o agent | misleading-sign follow rate 8.0 → 0.7 | helpful-cue follow rate 65 → 99 | **Partly:** white-box noise injections on Qwen still succeed 34–56% |
-| Pictionary [zhang2026renderbeforereading] | text IPI in agent tools · 10 frontier models | DirectInject ASR, e.g. 75.0 → 0.0 (GPT-5.4 mini), 98.2 → 55.4 (Gemini 3.1 Pro) | AgentDojo utility under attack mostly kept (e.g. GPT-5.4 mini 71.4 → 64.9) | **Yes:** adaptive and human red-team ASR from 9.5% to 97.8%, depending on model |
-| ICON [wang2026icon] | text agent IPI | ASR 0.4% | over 50% task-utility gain vs. baselines | not in abstract |
-| InstructDetector [wen2025instructdetector] | text IPI · BIPIA | ASR → 0.03%; detection 99.6% (in-domain) / 96.9% (out-of-domain) | detection only, no repair | not in abstract |
-| TaskTracker [abdelnabi2025tasktracker] | text task drift | near-perfect ROC AUC (out-of-distribution) | detection only | not in abstract |
-| Attention Tracker [hung2024attentiontracker] | text IPI | AUROC up to +10.0% over prior detectors | training-free; detection only | not in abstract |
-| Probing & Steering [anon2026probingsteering] | text IPI · Qwen2.5-3B | compliance 0.58 → 0.26 (probe AUC 0.90) | mainly task-replacement attacks | not in abstract |
-| MELON [zhu2025melon] | text agent IPI · AgentDojo, GPT-4o | average ASR 16.1 → 0.24 | benign utility 80.4 → 68.0 (MELON-Aug: 76.3); doubles agent calls | no |
-| StruQ [chen2025struq] | text IPI · Llama | Completion-Real 96 → 0; TAP 97 → 9 | AlpacaEval 67.2 → 67.6 | **Yes:** GCG optimization still reaches 58% |
-| SecAlign [chen2025secalign] | text IPI | ASR below 10%, including attacks stronger than those seen in training | "similar utility" | **Partly:** stronger unseen attacks, per the abstract |
-| Spotlighting [hines2024spotlighting] | text IPI · GPT models | ASR above 50 → below 2 | "minimal impact" | no |
-| CaMeL [debenedetti2025camel] | text agent IPI · AgentDojo | provable security on solved tasks | 77% of tasks solved vs. 84% undefended | by design |
-| ECSO [gou2024ecso] | VLM jailbreak · LLaVA-1.5-7B | safety improved 37.6% (MM-SafetyBench SD+OCR) and 71.3% (VLSafe) | "consistently maintaining utility" | no |
-| ETA [ding2024eta] | VLM jailbreak | unsafe rate reduced by 87.5% (cross-modality attacks) | 96.6% win-or-tie in GPT-4 helpfulness | no |
-| Immune [ghosal2025immune] | MLLM jailbreak · LLaVA-1.6 | ASR reduced by 57.82% vs. base model | slower decoding (reward-guided) | no |
-| VLMGuard [fang2026vlmguard] | malicious VLM prompts | AUROC +5.39% over prior best | detection only | no |
-| NullSteer [zhu2026nullsteer] | VLM jailbreak · MiniGPT-4 | average ASR reduced by over 15 points | general benchmarks comparable to the original model | not in abstract |
-| Dyslexify [hufe2025dyslexify] | typographic attack · CLIP | up to +22.06% accuracy on typographic ImageNet-100 | under 1% drop on clean ImageNet-100 | not in abstract |
-| QuISE [lu2026quise] | typographic attack · 4 VLMs | recovery rate 67.9–75.0% | harm rate 0.5–1.1% | not in abstract |
-| RoboSafe [wang2025robosafe] | hazardous instructions · embodied agents | risk occurrence −36.8% vs. leading baselines | near-original task performance | not in abstract |
-| J-DAPT [marchiori2025jdapt] | robot jailbreaks · driving, maritime, quadruped | detection accuracy near 100% | minimal overhead | not in abstract |
-| RIPA firewall [dorzhiev2026ripa] | sensor-channel injection · ROS 2 | 0% ASR on known patterns | 0/20 false positives on benign commands | **Yes:** 10.2% bypass under obfuscated payloads |
-| Paper-hijack mitigations [samarakoon2026hijacking] | robot sorting · GPT-4o, Gemini, Qwen3-VL | prompt defense 75–100% effective; two-stage check 85–100%; text masking 100% | masking blocks tasks that need in-scene labels | no |
+### 4.3 Close defenses (each from its own paper)
 
-### 4.4 Attack strength reported by attack papers
+Only defenses against text or instructions placed in images or physical scenes.
+"Before → after" is without defense → with defense.
 
-| Attack | Setting | Reported success |
+| Defense | Where it acts | Tested on | Attack success: before → after | Cost to normal use, and extra work | Tested against an attacker who knows the defense? | Versus ARGUS |
+|---|---|---|---|---|---|---|
+| **ARGUS** [lu2026argus] | inside the language model (hidden states) | Qwen2-VL-7B, Kimi-Audio-7B, plus 3 more models; own image, video and audio test | AIA 25.1 → 0.1 (image), 28.2 → 0.1 (video), 12.6 → 0.0 (audio) | UIA<sub>clean</sub> unchanged; +3–6 ms inside the same pass | No | reference |
+| Trust-boundary multi-agent framework [chang2026trustboundary] | two extra prompted agents: one rates how reliable each sign is, one decides what to follow | 7 VLMs incl. GPT-4o; image-editing and manipulation agents | M Avg 8.0 → 0.7 (GPT-4o); 0.0–3.3 across all 7 models | H Avg rises 65.0 → 99.0 (GPT-4o): helpful signs are still obeyed; 2 extra model calls | Partly: white-box noise images (PGD) still mislead 34–56% of the time | Similar attack success, works on closed models, and also tests helpful signs, which ARGUS never measures. Slower. |
+| Text masking (D3) [samarakoon2026hijacking] | before the model: OCR finds scene text and covers it | GPT-4o, Gemini 2.5 Flash, Qwen3-VL-32B; robot sorting, 1,800 attack trials per model | ASR 27.0 → 0.0, 29.4 → 0.0, 5.0 → 0.0 (effectiveness 100%) | all scene text is hidden, so tasks that need labels break; one OCR pass | No | Lower attack success on its own test, but the robot can no longer read any sign. |
+| Two-stage verification (D2) [samarakoon2026hijacking] | a second call to the same VLM checks and corrects the plan | same as above | ASR 27.0 → 4.1, 29.4 → 2.9, 5.0 → 0.0 (effectiveness 85–100%) | task ability kept on their test; 1 extra model call | No | Close; works on closed models; slower. |
+| Prompt warning (D1) [samarakoon2026hijacking] | system prompt: "ignore text in the scene" | same as above | ASR 27.0 → 6.7, 29.4 → 0.3, 5.0 → 0.0 (effectiveness 75–100%) | none reported | No | Same idea as ARGUS's system-prompt baseline, which was unreliable there. |
+| TaCo-Guard (taint-aware counterfactual guard) [li2026devillens] | before the model: OCR plus an LLM scores each text region's risk and blurs risky ones | 12 VLMs; smart-glasses photos from 200+ real scenes | ASR per task, e.g. 100 → 3.8 (Gemini 2.5 Flash), 100 → 15.3 (Qwen3-VL-235B); most end at or below 15 | effect on normal use called "limited" (no number); OCR plus an LLM call | No | Close; works on closed models; tested on still photos only. |
+| Token-drift feature pullback [li2026devillens] | inside the vision encoder: tokens that drift from a clean reference are pulled back toward it (forward hooks) | Llama-3.2-11B-Vision, Qwen2.5-VL-7B; navigation task | ASR 34.6 → 7.6; 3.8 → 0.0 | not reported; needs TaCo-Guard's cleaned image as a reference | No | Closest mechanism to ARGUS (edits hidden features), but early: one task, two models. |
+| QuISE (query-irrelevant semantic editing) [lu2026quise] | before the model: rewrites text regions unrelated to the question and compares the answers | 4 VLMs; 3 typographic-attack tests, 8,558 attacked samples | RR 67.9–75.0% of attack-caused errors fixed | HR 0.5–1.1% of correct answers broken; several edited images and queries | not reported | Fixes about 70% of attack errors, against ARGUS's near-complete fix; works on closed models. |
+
+**Where ARGUS lands among them.** On reported attack success, ARGUS (0.0–0.2%) sits
+with the best: text masking (0%) and the trust-boundary framework (0–3.3%). It does
+better than TaCo-Guard and QuISE. It is the only one that:
+
+- covers image, video and audio;
+- keeps scene text readable while stopping the model from obeying it;
+- costs milliseconds rather than extra model calls or editing passes.
+
+The close defenses are ahead in three ways: they work with closed models such as
+GPT-4o, two of them were tested on physical scenes, and the trust-boundary framework
+shows that helpful signs are still obeyed.
+
+### 4.4 Attack strength without any defense
+
+Only attacks that place text in images, screens or physical scenes.
+
+| Attack | What it does | Success with no defense |
 |---|---|---|
-| ARGUS benchmark (for scale) [lu2026argus] | typographic / TTS / video-text IPI, undefended | AIA 25.1% image, 28.2% video, 12.6% audio (Qwen2-VL-7B / Kimi-Audio); 8.6% InternVL3.5-8B |
-| Image Hijacks [bailey2024imagehijacks] | white-box adversarial images · LLaVA | over 80% for all four attack types |
-| FigStep [gong2025figstep] | typographic jailbreak · 6 open VLMs | 82.5% average |
-| Invisible Injections [pathade2025invisible] | steganographic text · 8 VLMs | 24.3% ± 3.2 overall, up to 31.8% |
-| Reading Between the Pixels [balakrishnan2026readingpixels] | typographic · GPT-4o, Claude Sonnet 4.5 | text-in-image 36% / 47% vs. image attacks 8% / 22% |
-| VPI-Bench [cao2026vpibench] | GUI visual injection | up to 51% (computer-use agents), 100% (browser agents) |
-| Pop-ups [zhang2025popups] | OSWorld, VisualWebArena | 86% average; task success −47% |
-| EIA [liao2025eia] | web agent PII theft | up to 70% (specific PII), 16% (full request) |
-| PPIA [ling2026ppia] | physical typography · 10 VLMs | up to 98% |
-| Paper-hijack [samarakoon2026hijacking] | robot sorting, 5,670 trials | 27.0% GPT-4o, 29.4% Gemini 2.5 Flash, 5.0% Qwen3-VL-32B |
-| Trust-boundary attacks [chang2026trustboundary] | GPT-4o image-editing agent; Qwen (white-box noise) | 28.7% (best structured injection); 94% (white-box noise) |
-| CHAI [burbano2025chai] | drones, driving, real robot car | "outperforms state-of-the-art attacks" (abstract gives no single number) |
-| Evasive suffix vs. activation probes [rahman2026evasive] | attacks drift *detectors* · Phi-3, Llama-3-8B | evades all layer-wise probes at once: 93.91% / 99.63% |
-| AgentTypo [li2025agenttypo] | adaptive typographic injection · 7 model backends | 45–83% |
-| CrossInject [wang2025crossinject] | cross-modal agent injection | +30.1 points or more over prior attacks |
-| Devil in the Lens [li2026devillens] | physical text · smart-glasses VLMs | up to 96% (simulated), 60% (real world) |
-| Shawshank [li2025shawshank] | environmental instructions · 6 VLMs | compromises all six; beats 11 prior methods |
-| PINA [liu2026pina] | navigation agents | 87.5% average |
-| RIPA [dorzhiev2026ripa] | ROS 2 sensor channels · 5 LLMs | 100% on Llama-3.3-70B; 0% on two 7–8B models for direct override |
-| RoboPAIR [robey2024robopair] | robot jailbreak, incl. Unitree Go2 | "often 100%" |
-| POEF [lu2024intentbehavior] | robot jailbreak, behaviour level | 80% executable harmful behaviour |
+| ARGUS's own test [lu2026argus] | caption strip on images, spoken clip in audio, text frames in video | AIA 25.1% image, 28.2% video, 12.6% audio; 8.6% on InternVL3.5-8B |
+| Paper-hijack [samarakoon2026hijacking] | printed notes on a robot's work table | ASR 27.0% GPT-4o, 29.4% Gemini 2.5 Flash, 5.0% Qwen3-VL-32B; "authority impersonation" notes up to 80% |
+| Trust-boundary attacks [chang2026trustboundary] | signs in an agent's scene; optimized image noise | 28.7% best printed injection (GPT-4o); 94% white-box noise (Qwen2.5-VL) |
+| Devil in the Lens [li2026devillens] | physical text seen by smart glasses | up to 96% (simulated), 60% (real world) |
+| PPIA (physical prompt injection attack) [ling2026ppia] | instructions printed on physical objects, placed where the model looks | up to 98% across 10 VLMs |
+| AgentTypo [li2025agenttypo] | text in web images, with its position, contrast and colour optimized | 45–83% |
+| VPI-Bench (visual prompt injection benchmark) [cao2026vpibench] | instructions inside rendered app and web screens | up to 51% (CUA), 100% (BUA) |
+| Pop-up attack [zhang2025popups] | adversarial pop-ups shown to computer agents | 86% average |
 
-### 4.5 Summary: what ARGUS does differently, and what it has not shown
+ARGUS's test attacks start at 6–28%; the other attacks reach 45–100%.
 
-**Where ARGUS stands out**
+### 4.5 Summary: ARGUS's strengths and downsides
 
-1. **One method, three modalities.** It is the only defense here with results on
-   image, video *and* audio, with AIA 0.0–0.2% in all six model/modality settings.
-   The closest steering defense (ASTRA) covers images only, and every text-only
-   steering paper covers text only.
-2. **The user's task survives the attack.** Most defenses either refuse, halt, or
-   only flag the input (TaskTracker, InstructDetector, VLMGuard, MELON's
-   detection). ARGUS steers the model back, so UIA<sub>inject</sub> goes up
-   (image 30.9 → 46.3). Among the papers here, only ICON reports the same
-   repair-rather-than-refuse goal, mainly for text agents (its abstract mentions an
-   extension to multimodal agents).
-3. **No cost on clean inputs.** Detection gating keeps UIA<sub>clean</sub> equal to
-   no defense. MELON loses 12 points of benign utility; adversarial training in
-   ARGUS's own table loses 9.
-4. **Cheap and training-light.** About 3–6 ms per sample, one forward pass, model
-   weights untouched. Compare: StruQ and SecAlign need fine-tuning; MELON runs the
-   agent twice; ETA uses best-of-N sampling; trust boundary adds two agent calls;
-   Removal costs seconds to minutes.
+**Strengths**
 
-**Where ARGUS is weaker or untested**
+1. **One method for image, video and audio.** Attack success ends at 0.0–0.2% in all
+   six model and modality settings tested. Every close defense in §4.3 was tested on
+   images only.
+2. **The user still gets their answer, and scene text stays readable.** ARGUS steers
+   the model back to the user's question, so the user is answered more often under
+   attack (UIA<sub>inject</sub> 30.9 → 46.3 on images). The masking defenses (text
+   masking, TaCo-Guard, QuISE) delete or rewrite the text instead, which also removes
+   legitimate labels.
+3. **No cost on clean inputs.** Normal accuracy (UIA<sub>clean</sub>) is identical to no
+   defense, because the steering only switches on when the detector fires. Adversarial
+   training loses about 9 points.
+4. **Cheap.** About 3–6 ms per sample inside the normal forward pass, with the model's
+   weights unchanged. The close alternatives add an OCR pass, one or two extra model
+   calls, several edited copies of the image, or seconds to minutes of editing.
 
-1. **No adaptive attack.** ASTRA (58–69% under adaptive attack on Qwen2-VL), StruQ
-   (58% under GCG), Pictionary (red-team union) and trust boundary (34–56% under
-   white-box noise) all report how far their numbers fall against a stronger
-   attacker. ARGUS's 0.1% has no such counterpart. The most direct warning is
-   [rahman2026evasive]: one optimized suffix evades every layer-wise drift probe at
-   once (93.91–99.63%), and ARGUS's detection and post-filter stages are the same
-   kind of linear probe. ARGUS's own argument is that steering is hard to bypass
-   *without weight access*, so a white-box attacker who targets the probes is
-   outside its threat model.
-2. **A modest undefended baseline.** Undefended AIA in ARGUS's benchmark is 6–28%.
-   Physical, GUI and agent attacks reach 45–100% (PPIA, VPI-Bench, pop-ups,
-   AgentTypo, PINA, Devil in the Lens). A
-   near-zero result is easier to reach from a 25% start, so the gap to these
+**Downsides**
+
+1. **Never tested against an attacker who knows the defense** (an *adaptive* attack).
+   None of the close defenses fully did this either; only the trust-boundary paper
+   tried white-box noise, and 34–56% of attacks still succeeded. Evidence from nearby
+   work is not reassuring:
+   - ASTRA, a steering defense against jailbreaks, rose from 5–18% back to 58–69%
+     attack success under a PGD attack that knew its steering vectors [wang2025astra];
+   - one GCG-optimized suffix fooled every layer-wise linear probe at once in 93.91–99.63%
+     of cases [rahman2026evasive], and ARGUS's detector and post-filter are linear probes;
+   - "The Attacker Moves Second" broke 12 published defenses, most of which had
+     reported near-zero attack success, with over 90% success against most of them
+     [nasr2025attackermovessecond].
+
+   ARGUS argues it is hard to bypass without access to the model's weights.
+2. **Easy attacks in its test.** With no defense, ARGUS's attacks succeed only 6–28%
+   of the time; the attacks in §4.4 reach 45–100%. Whether ARGUS holds against much
    stronger attacks is untested.
-3. **A narrow attack family.** Training and testing both use rendered caption
-   strips, TTS clips and inserted video text. Generalization is checked with a
-   different trigger sentence and font size at test time, plus one user
-   instruction and one injection per sample (the paper's stated limitation).
-   Adversarial-pixel, steganographic and physical-scene attacks are not evaluated.
-4. **White-box and per-model.** Probes and vectors must be retrained for each model,
-   whereas the trust-boundary and Pictionary approaches work on closed APIs.
+3. **One attack style per modality.** Training and testing both use a printed caption
+   strip, a spoken clip or inserted text frames. The test changes only the trigger
+   sentence and the font size, with one user instruction and one injection per sample.
+   It never measures whether helpful signs are still obeyed, which the trust-boundary
+   paper does.
+4. **Needs model internals, retrained per model.** ARGUS reads and edits hidden states,
+   so it cannot protect closed models such as GPT-4o, and its probes and vectors must
+   be rebuilt for every model. The trust-boundary framework, text masking, TaCo-Guard
+   and QuISE all work through a normal model interface.
 
 ---
 
@@ -541,3 +534,67 @@ What the table shows:
      states look benign [rahman2026evasive]. The white-box attacks in §3.1 give the
      means to try this on images, and suffix augmentation [rahman2026evasive] is a
      defense to test against it.
+
+---
+
+## Appendix A. Broad metric tables
+
+These are the full tables behind §4, including the text-only and jailbreak-only papers that §4 leaves out. The metric names are defined in §4.1. As in §4, every row comes from a different paper and setting.
+
+### A.1 All defenses, including text-only and jailbreak-only (each in its own setting)
+
+"Before → after" is the undefended → defended value reported by each paper.
+
+| Defense | Threat · setting | Attack metric, before → after | Utility / side effect | Adaptive attack reported? |
+|---|---|---|---|---|
+| **ARGUS** [lu2026argus] | multimodal IPI · Qwen2-VL-7B, own benchmark | AIA 25.1 → 0.1 (image), 28.2 → 0.1 (video), 12.6 → 0.0 (audio) | UIA<sub>clean</sub> unchanged; +3–6 ms | **No.** The paper argues it is hard to bypass without weight access. |
+| ASTRA [wang2025astra] | VLM jailbreak, adversarial images · Qwen2-VL | jailbreak ASR 67–76 → 5–18 | "little performance drop" on benign inputs | **Yes:** with full knowledge, ASR 58–69 on Qwen2-VL, 14–25 on MiniGPT-4 |
+| Trust boundary [chang2026trustboundary] | embodied scene signs · GPT-4o agent | misleading-sign follow rate 8.0 → 0.7 | helpful-cue follow rate 65 → 99 | **Partly:** white-box noise injections on Qwen still succeed 34–56% |
+| Pictionary [zhang2026renderbeforereading] | text IPI in agent tools · 10 frontier models | DirectInject ASR, e.g. 75.0 → 0.0 (GPT-5.4 mini), 98.2 → 55.4 (Gemini 3.1 Pro) | AgentDojo utility under attack mostly kept (e.g. GPT-5.4 mini 71.4 → 64.9) | **Yes:** adaptive and human red-team ASR from 9.5% to 97.8%, depending on model |
+| ICON [wang2026icon] | text agent IPI | ASR 0.4% | over 50% task-utility gain vs. baselines | not in abstract |
+| InstructDetector [wen2025instructdetector] | text IPI · BIPIA | ASR → 0.03%; detection 99.6% (in-domain) / 96.9% (out-of-domain) | detection only, no repair | not in abstract |
+| TaskTracker [abdelnabi2025tasktracker] | text task drift | near-perfect ROC AUC (out-of-distribution) | detection only | not in abstract |
+| Attention Tracker [hung2024attentiontracker] | text IPI | AUROC up to +10.0% over prior detectors | training-free; detection only | not in abstract |
+| Probing & Steering [anon2026probingsteering] | text IPI · Qwen2.5-3B | compliance 0.58 → 0.26 (probe AUC 0.90) | mainly task-replacement attacks | not in abstract |
+| MELON [zhu2025melon] | text agent IPI · AgentDojo, GPT-4o | average ASR 16.1 → 0.24 | benign utility 80.4 → 68.0 (MELON-Aug: 76.3); doubles agent calls | no |
+| StruQ [chen2025struq] | text IPI · Llama | Completion-Real 96 → 0; TAP 97 → 9 | AlpacaEval 67.2 → 67.6 | **Yes:** GCG optimization still reaches 58% |
+| SecAlign [chen2025secalign] | text IPI | ASR below 10%, including attacks stronger than those seen in training | "similar utility" | **Partly:** stronger unseen attacks, per the abstract |
+| Spotlighting [hines2024spotlighting] | text IPI · GPT models | ASR above 50 → below 2 | "minimal impact" | no |
+| CaMeL [debenedetti2025camel] | text agent IPI · AgentDojo | provable security on solved tasks | 77% of tasks solved vs. 84% undefended | by design |
+| ECSO [gou2024ecso] | VLM jailbreak · LLaVA-1.5-7B | safety improved 37.6% (MM-SafetyBench SD+OCR) and 71.3% (VLSafe) | "consistently maintaining utility" | no |
+| ETA [ding2024eta] | VLM jailbreak | unsafe rate reduced by 87.5% (cross-modality attacks) | 96.6% win-or-tie in GPT-4 helpfulness | no |
+| Immune [ghosal2025immune] | MLLM jailbreak · LLaVA-1.6 | ASR reduced by 57.82% vs. base model | slower decoding (reward-guided) | no |
+| VLMGuard [fang2026vlmguard] | malicious VLM prompts | AUROC +5.39% over prior best | detection only | no |
+| NullSteer [zhu2026nullsteer] | VLM jailbreak · MiniGPT-4 | average ASR reduced by over 15 points | general benchmarks comparable to the original model | not in abstract |
+| Dyslexify [hufe2025dyslexify] | typographic attack · CLIP | up to +22.06% accuracy on typographic ImageNet-100 | under 1% drop on clean ImageNet-100 | not in abstract |
+| QuISE [lu2026quise] | typographic attack · 4 VLMs | recovery rate 67.9–75.0% | harm rate 0.5–1.1% | not in abstract |
+| RoboSafe [wang2025robosafe] | hazardous instructions · embodied agents | risk occurrence −36.8% vs. leading baselines | near-original task performance | not in abstract |
+| J-DAPT [marchiori2025jdapt] | robot jailbreaks · driving, maritime, quadruped | detection accuracy near 100% | minimal overhead | not in abstract |
+| RIPA firewall [dorzhiev2026ripa] | sensor-channel injection · ROS 2 | 0% ASR on known patterns | 0/20 false positives on benign commands | **Yes:** 10.2% bypass under obfuscated payloads |
+| Paper-hijack mitigations [samarakoon2026hijacking] | robot sorting · GPT-4o, Gemini, Qwen3-VL | prompt defense 75–100% effective; two-stage check 85–100%; text masking 100% | masking blocks tasks that need in-scene labels | no |
+
+### A.2 All attacks, including text and jailbreak attacks
+
+| Attack | Setting | Reported success |
+|---|---|---|
+| ARGUS benchmark (for scale) [lu2026argus] | typographic / TTS / video-text IPI, undefended | AIA 25.1% image, 28.2% video, 12.6% audio (Qwen2-VL-7B / Kimi-Audio); 8.6% InternVL3.5-8B |
+| Image Hijacks [bailey2024imagehijacks] | white-box adversarial images · LLaVA | over 80% for all four attack types |
+| FigStep [gong2025figstep] | typographic jailbreak · 6 open VLMs | 82.5% average |
+| Invisible Injections [pathade2025invisible] | steganographic text · 8 VLMs | 24.3% ± 3.2 overall, up to 31.8% |
+| Reading Between the Pixels [balakrishnan2026readingpixels] | typographic · GPT-4o, Claude Sonnet 4.5 | text-in-image 36% / 47% vs. image attacks 8% / 22% |
+| VPI-Bench [cao2026vpibench] | GUI visual injection | up to 51% (computer-use agents), 100% (browser agents) |
+| Pop-ups [zhang2025popups] | OSWorld, VisualWebArena | 86% average; task success −47% |
+| EIA [liao2025eia] | web agent PII theft | up to 70% (specific PII), 16% (full request) |
+| PPIA [ling2026ppia] | physical typography · 10 VLMs | up to 98% |
+| Paper-hijack [samarakoon2026hijacking] | robot sorting, 5,670 trials | 27.0% GPT-4o, 29.4% Gemini 2.5 Flash, 5.0% Qwen3-VL-32B |
+| Trust-boundary attacks [chang2026trustboundary] | GPT-4o image-editing agent; Qwen (white-box noise) | 28.7% (best structured injection); 94% (white-box noise) |
+| CHAI [burbano2025chai] | drones, driving, real robot car | "outperforms state-of-the-art attacks" (abstract gives no single number) |
+| Evasive suffix vs. activation probes [rahman2026evasive] | attacks drift *detectors* · Phi-3, Llama-3-8B | evades all layer-wise probes at once: 93.91% / 99.63% |
+| AgentTypo [li2025agenttypo] | adaptive typographic injection · 7 model backends | 45–83% |
+| CrossInject [wang2025crossinject] | cross-modal agent injection | +30.1 points or more over prior attacks |
+| Devil in the Lens [li2026devillens] | physical text · smart-glasses VLMs | up to 96% (simulated), 60% (real world) |
+| Shawshank [li2025shawshank] | environmental instructions · 6 VLMs | compromises all six; beats 11 prior methods |
+| PINA [liu2026pina] | navigation agents | 87.5% average |
+| RIPA [dorzhiev2026ripa] | ROS 2 sensor channels · 5 LLMs | 100% on Llama-3.3-70B; 0% on two 7–8B models for direct override |
+| RoboPAIR [robey2024robopair] | robot jailbreak, incl. Unitree Go2 | "often 100%" |
+| POEF [lu2024intentbehavior] | robot jailbreak, behaviour level | 80% executable harmful behaviour |
