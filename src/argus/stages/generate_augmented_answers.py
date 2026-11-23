@@ -8,7 +8,7 @@ from tqdm import tqdm
 from argus.config import cfg_get, get_paths, load_config, resolve_input_path
 from argus.io_utils import load_json, save_json, seed_everything
 from argus.media import clean_media, ensure_image_argus_stage, poison_media, split_json_path
-from argus.modeling import VisionLanguageRunner, parse_json_object_detailed
+from argus.modeling import VisionLanguageRunner, parse_json_object_detailed, resolve_dtype
 from argus.prompts import AUGMENTATION_PROMPT
 
 
@@ -190,9 +190,20 @@ def main() -> None:
         print(f"skip existing {output_path}")
         return
 
+    if not bool(cfg_get(config, "augmentation.enabled", True)):
+        # Low-compute mode: keep the original answers. Activation collection and train_vector
+        # fall back to first_answer/second_answer when no *_augmented field is present.
+        all_data = load_json(input_path)
+        if args.num_shards > 1:
+            all_data = [dict(item, _augmentation_index=i) for i, item in enumerate(all_data) if i % args.num_shards == args.shard_index]
+        save_json(all_data, output_path)
+        print(f"augmentation disabled: copied {len(all_data)} samples -> {output_path}")
+        return
+
     runner = VisionLanguageRunner(
         resolve_input_path(config, "model.path"),
         device=cfg_get(config, "run.device"),
+        dtype=resolve_dtype(cfg_get(config, "run.dtype", "bf16")),
     )
     max_new_tokens = int(cfg_get(config, "augmentation.max_new_tokens", max(512, int(cfg_get(config, "generation.max_new_tokens", 128)))))
     repair_max_new_tokens = int(cfg_get(config, "augmentation.repair_max_new_tokens", max_new_tokens))

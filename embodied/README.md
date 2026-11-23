@@ -37,6 +37,13 @@ If the model outputs garbage in fp16 on the T4, add `--dtype fp32` (the 2B model
 - `summary.json`: task / attack success rate per condition
 - `<condition>/epNNN/`: every camera frame, plus `episode.json` with the model's raw output for each step
 
+## Train ARGUS on Kaggle, then test it on the robot
+
+Import `https://raw.githubusercontent.com/AayushOjha001/ARGUS/main/embodied/kaggle_train_argus.ipynb`, set
+GPU T4 x2 + Internet On, then **Save Version → Save & Run All (Commit)**. It runs in the background for
+about 4–6 h using `configs/argus_kaggle.yaml` (paper Table 2 settings, smaller splits). The run covers
+dataset build, ARGUS training, the paper-style evaluation on VTQA, and the robot test with ARGUS on.
+
 ## ARGUS defense (after training the pipeline for the same model)
 
 ```bash

@@ -10,7 +10,7 @@ from argus.config import cfg_get, get_paths, load_config, resolve_input_path
 from argus.eval_metrics import score_response, summarize_scores
 from argus.io_utils import load_json, save_json, seed_everything
 from argus.media import ensure_image_argus_stage, get_modality, poison_media, split_json_path
-from argus.modeling import VisionLanguageRunner
+from argus.modeling import VisionLanguageRunner, resolve_dtype
 from argus.preliminary import (
     MultiLayerSteeringController,
     SingleLayerSteeringController,
@@ -314,6 +314,63 @@ def build_summary(config: dict[str, Any], force: bool = False) -> dict:
     return result
 
 
+def run_fixed_preliminary(config: dict[str, Any], paths, data: list[dict], probe_dir: Path, generation_kwargs: dict,
+                          force: bool, modality: str) -> dict:
+    """Low-compute mode (preliminary.mode: fixed): skip the layer/strength search and use known settings,
+    e.g. the paper's Table 2 for Qwen2-VL-7B image (layer 13, strength 25). Still runs no-steering and the
+    chosen defense on the validation set, because train_vector picks its early-stop samples from them."""
+    output_path = paths.result_dir / "preliminary_experiments.json"
+    prediction_path = paths.result_dir / "preliminary_experiments_predictions.json"
+    layers = [int(x) for x in cfg_get(config, "preliminary.fixed_layers", [13])]
+    alpha = float(cfg_get(config, "preliminary.fixed_strength", 25))
+    if output_path.exists() and prediction_path.exists() and not force:
+        existing = load_json(output_path)
+        if existing.get("mode") == "fixed" and existing.get("best_layers") == layers and float(existing.get("best_strength", -1)) == alpha:
+            print(f"skip existing {output_path}")
+            return existing
+
+    runner = VisionLanguageRunner(
+        resolve_input_path(config, "model.path"),
+        device=cfg_get(config, "run.device"),
+        dtype=resolve_dtype(cfg_get(config, "run.dtype", "bf16")),
+    )
+    no_steering = run_one_condition(
+        runner, data, probe_dir, generation_kwargs, "no_steering", [], None, None,
+        condition_path(paths, "no_steering", [], None, None), force, modality,
+    )
+    kind = "single_sensitivity" if len(layers) == 1 else "multi_topn"
+    defense = run_one_condition(
+        runner, data, probe_dir, generation_kwargs, kind, layers, alpha, "defense",
+        condition_path(paths, kind, layers, alpha, "defense"), force, modality,
+    )
+    best = {"kind": kind, "layers": layers, "layer": layers[0] if len(layers) == 1 else None,
+            "alpha": alpha, "direction": "defense", **defense["metrics"]}
+    predictions = {
+        "no_steering": no_steering["results"],
+        "fixed_layer_results": [],
+        "sensitivity_results": defense["results"] if kind == "single_sensitivity" else [],
+        "multi_layer_results": defense["results"] if kind == "multi_topn" else [],
+    }
+    result = {
+        "mode": "fixed",
+        "selection_rule": "layers and strength fixed by config (preliminary.fixed_layers / fixed_strength); no search",
+        "no_steering": no_steering["metrics"],
+        "single_sensitivity_results": [best] if kind == "single_sensitivity" else [],
+        "multi_layer_results": [best] if kind == "multi_topn" else [],
+        "best_layers": layers,
+        "best_layer": layers[0],
+        "best_strength": alpha,
+        "best_strength_metrics": best,
+        "prediction_path": str(prediction_path),
+        "condition_dir": str(paths.result_dir / "preliminary_conditions"),
+    }
+    save_json(predictions, prediction_path)
+    save_json(result, output_path)
+    print({"no_steering": no_steering["metrics"], "defense": defense["metrics"]})
+    print(output_path)
+    return result
+
+
 def load_validation_data(config: dict[str, Any], paths) -> list[dict]:
     data = load_json(split_json_path(paths, config, "val"))
     max_samples = cfg_get(config, "debug.max_samples")
@@ -381,6 +438,7 @@ def main() -> None:
         runner = VisionLanguageRunner(
             resolve_input_path(config, "model.path"),
             device=cfg_get(config, "run.device"),
+            dtype=resolve_dtype(cfg_get(config, "run.dtype", "bf16")),
         )
         run_one_condition(
             runner,
@@ -397,6 +455,10 @@ def main() -> None:
         )
         return
 
+    if str(cfg_get(config, "preliminary.mode", "search")).strip().lower() == "fixed":
+        run_fixed_preliminary(config, paths, data, probe_dir, generation_kwargs, args.force, modality)
+        return
+
     # Single-process mode writes one resumable file per completed condition.
     output_path = paths.result_dir / "preliminary_experiments.json"
     prediction_path = paths.result_dir / "preliminary_experiments_predictions.json"
@@ -409,6 +471,7 @@ def main() -> None:
     runner = VisionLanguageRunner(
         resolve_input_path(config, "model.path"),
         device=cfg_get(config, "run.device"),
+        dtype=resolve_dtype(cfg_get(config, "run.dtype", "bf16")),
     )
     modality = get_modality(config)
     layer_start = int(cfg_get(config, "preliminary.layer_start", 8))

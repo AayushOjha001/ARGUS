@@ -49,7 +49,9 @@ def _as_image(value: Any) -> Image.Image | None:
 def filter_vtqa_samples(raw_data: Any) -> list[dict[str, Any]]:
     samples: list[dict[str, Any]] = []
     for item in raw_data:
-        image = _as_image(item.get("image_path"))
+        source = item.get("image_path")
+        # Keep file paths lazy (opened in build_record); decoding ~11k images up front costs several GB of RAM.
+        image = source if isinstance(source, str) and Path(source).exists() else _as_image(source)
         answers = item.get("answers")
         if image is None or not item.get("question") or not isinstance(answers, list) or not answers:
             continue
@@ -82,7 +84,63 @@ def load_vtqa_dataset(config: dict[str, Any]) -> Any:
             return load_dataset(str(path / "vtqa2023.py"), vtqa_config, trust_remote_code=trust_remote_code)
         return load_dataset(str(path), vtqa_config, trust_remote_code=trust_remote_code)
 
+    if str(cfg_get(config, "data.vtqa_loader", "script")).strip().lower() == "zip":
+        cache_dir = Path(str(cfg_get(config, "data.vtqa_cache_dir", "./data/vtqa_zip"))).expanduser()
+        if not cache_dir.is_absolute():
+            cache_dir = Path(config["_project_dir"]) / cache_dir
+        return load_vtqa_from_zips(raw_path, vtqa_config, cache_dir)
     return load_dataset(raw_path, vtqa_config, trust_remote_code=trust_remote_code)
+
+
+def _find_dir_with(root: Path, file_name: str) -> Path:
+    for candidate in root.rglob(file_name):
+        return candidate.parent
+    raise FileNotFoundError(f"{file_name} not found under {root}")
+
+
+def load_vtqa_from_zips(repo_id: str, vtqa_config: str, cache_dir: Path) -> dict[str, list[dict[str, Any]]]:
+    """Script-free VTQA loader: newer `datasets` releases no longer run vtqa2023.py.
+
+    Mirrors the script's en-image output (same order, same fields) from data/annotations.zip and data/image.zip.
+    """
+    import zipfile
+
+    from huggingface_hub import hf_hub_download
+
+    lang = vtqa_config.split("-")[0] if "-" in vtqa_config else "en"
+    cache_dir = cache_dir.expanduser().resolve()
+    extracted: dict[str, Path] = {}
+    for name in ["annotations", "image"]:
+        target = cache_dir / name
+        if not (target / ".done").exists():
+            zip_path = hf_hub_download(repo_id, f"data/{name}.zip", repo_type="dataset", local_dir=str(cache_dir / "_zips"))
+            print(f"extracting {zip_path} -> {target}")
+            with zipfile.ZipFile(zip_path) as zf:
+                zf.extractall(target)
+            (target / ".done").write_text("ok")
+        extracted[name] = target
+
+    output: dict[str, list[dict[str, Any]]] = {}
+    for split, json_name in [("train", "train.json"), ("validation", "val.json")]:
+        annotation_dir = _find_dir_with(extracted["annotations"], json_name)
+        records = json.loads((annotation_dir / json_name).read_text(encoding="utf-8"))
+        # Locate the folder that really holds this split's images (robust to extra top-level or __MACOSX folders).
+        try:
+            image_dir = _find_dir_with(extracted["image"], records[0]["image_name"]["image"])
+        except FileNotFoundError:
+            image_subdir = "train" if split == "train" else "val"
+            image_dir = next((p for p in extracted["image"].rglob(image_subdir) if p.is_dir()), extracted["image"] / image_subdir)
+        output[split] = [
+            {
+                "question": d["question"]["raw"][lang],
+                "context": d["context"]["raw"][lang],
+                "answers": [{"answer_type": a.get("answer_type"), "answer": a["answer"][lang]} for a in d["answers"]],
+                "image_path": str(image_dir / d["image_name"]["image"]),
+            }
+            for d in records
+        ]
+        print(f"VTQA {split}: {len(output[split])} records, images in {image_dir}")
+    return output
 
 
 def render_caption_block(base_image: Image.Image, text: str, font_path: Path, font_size: int, margin: int = 20) -> Image.Image:
@@ -250,7 +308,8 @@ def build_record(
     second_instruction = f"{trigger} {injection['instruction']}".strip()
     poison_prompt = f"{BASE_USER_PROMPT} {question}\n <text> {second_instruction} {context}".strip()
 
-    image = copy.deepcopy(vtqa_item["image_path"]).convert("RGB")
+    source = vtqa_item["image_path"]
+    image = (Image.open(source) if isinstance(source, str) else copy.deepcopy(source)).convert("RGB")
     direction = random.choice(["top", "bottom"])
     poisoned_image = add_caption(image, second_instruction, direction, font_path, font_size)
 

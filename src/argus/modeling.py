@@ -23,6 +23,17 @@ def join_layer_output(hidden: torch.Tensor, rest: tuple | None) -> Any:
     return hidden if rest is None else (hidden,) + rest
 
 
+def resolve_dtype(name: str | None) -> torch.dtype:
+    """run.dtype: bf16 (paper default) | fp16 | fp32 | auto (bf16 on Ampere+, fp16 on older GPUs such as T4)."""
+    name = str(name or "bf16").strip().lower()
+    if name == "auto":
+        if not torch.cuda.is_available():
+            return torch.float32
+        return torch.bfloat16 if torch.cuda.get_device_capability()[0] >= 8 else torch.float16
+    return {"bf16": torch.bfloat16, "bfloat16": torch.bfloat16, "fp16": torch.float16, "float16": torch.float16,
+            "fp32": torch.float32, "float32": torch.float32}[name]
+
+
 def set_cuda_device(device: str | None) -> None:
     if device is not None and "CUDA_VISIBLE_DEVICES" not in os.environ:
         os.environ["CUDA_VISIBLE_DEVICES"] = str(device)

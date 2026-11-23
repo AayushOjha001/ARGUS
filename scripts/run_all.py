@@ -578,6 +578,12 @@ def main() -> None:
         env["CUDA_VISIBLE_DEVICES"] = gpu_id
         print(f"CUDA_VISIBLE_DEVICES={gpu_id}")
     gpu_ids = split_gpu_ids(gpu_id)
+    multi_gpu = str(load_runner_config(args.config, args.modality).get("run", {}).get("multi_gpu", "shard")).strip().lower()
+    if multi_gpu == "split_model" and len(gpu_ids) > 1:
+        # One process sees every GPU and device_map="auto" splits the model across them
+        # (needed when the model does not fit on a single GPU, e.g. Qwen2-VL-7B on 16 GB T4s).
+        print(f"run.multi_gpu=split_model: single process on GPUs {gpu_id}")
+        gpu_ids = [gpu_id]
 
     common = ["--config", args.config]
     if args.output_dir:
