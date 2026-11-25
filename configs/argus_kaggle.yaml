@@ -41,6 +41,7 @@ paper:
   detection_layer: 6
   post_filter_layer: 20
   vector_epochs: 1
+  vector_gradient_checkpointing: true  # backward through the 7B model does not fit on a T4 otherwise
   vector_learning_rate: 0.01
   vector_eval_interval_steps: 100
   vector_early_stop_patience: 2

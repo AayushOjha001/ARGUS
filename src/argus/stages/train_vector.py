@@ -6,6 +6,7 @@ from typing import Any
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
@@ -97,6 +98,20 @@ class MultiLayerEditor(nn.Module):
             return join_layer_output(hidden, rest)
 
         return hook_fn
+
+
+def answer_only_loss(model: Any, input_ids: torch.Tensor, attention_mask: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
+    """Same value as model(..., labels=labels).loss, with the vocabulary projection run on the answer tokens only.
+
+    The full forward projects every position (1-2k image/prompt tokens x 152k vocab) and keeps it, upcast
+    to fp32, for backward: several GB that do not fit next to half a 7B model on a 16 GB T4.
+    """
+    out = model.model(input_ids=input_ids, attention_mask=attention_mask, use_cache=False)
+    hidden = out.last_hidden_state if hasattr(out, "last_hidden_state") else out[0]
+    shift_labels = labels[:, 1:].to(hidden.device)
+    keep = shift_labels != -100
+    logits = model.lm_head(hidden[:, :-1][keep]).float()
+    return F.cross_entropy(logits, shift_labels[keep].to(logits.device))
 
 
 def capture_editor_state(multi: MultiLayerEditor, layers: list[int], strength: float) -> dict[str, Any]:
@@ -386,21 +401,31 @@ def main() -> None:
         print({"step": step, "objective": objective, **metrics, "improved": improved, "stale_evals": stale_evals})
         return stale_evals >= patience
 
+    if bool(cfg_get(config, "paper.vector_gradient_checkpointing", False)):
+        # Recompute layer activations during backward instead of storing them (memory for compute).
+        # Non-reentrant: the frozen model's inputs do not require grad, only the editor does.
+        model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
+        model.config.use_cache = False
+        if hasattr(model, "_require_grads_hook"):
+            # transformers also makes the input embeddings require grad, which would run backward through all
+            # layers; only layers from the steered one onward are needed.
+            model.disable_input_require_grads()
+        print("gradient checkpointing enabled for vector training")
+
     model.train()
     epochs = int(cfg_get(config, "paper.vector_epochs", 2))
     should_stop = False
     for epoch in range(epochs):
         for batch in tqdm(loader, desc=f"vector epoch {epoch + 1}/{epochs}"):
+            if not bool((batch["labels"][:, 1:] != -100).any()):
+                continue  # no answer tokens to learn from
             optimizer.zero_grad()
-            multi.edit_mask = batch["edit_mask"].to(next(model.parameters()).device)
-            outputs = model(
-                input_ids=batch["input_ids"].to(next(model.parameters()).device),
-                attention_mask=batch["attention_mask"].to(next(model.parameters()).device),
-                labels=batch["labels"].to(next(model.parameters()).device),
-            )
-            loss = outputs.loss
-            multi.edit_mask = None
+            device = next(model.parameters()).device
+            multi.edit_mask = batch["edit_mask"].to(device)
+            loss = answer_only_loss(model, batch["input_ids"].to(device), batch["attention_mask"].to(device), batch["labels"].to(device))
+            # Keep edit_mask set through backward: gradient checkpointing re-runs the hooked layer there.
             loss.backward()
+            multi.edit_mask = None
             optimizer.step()
             global_step += 1
             if global_step % eval_interval == 0:
