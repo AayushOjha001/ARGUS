@@ -2,7 +2,7 @@
 # Differences from the paper run, all to fit the free GPU budget:
 #   - smaller splits (1000 train / 200 val / 200 test instead of 10312 / 1000 / 1000)
 #   - fp16 (T4 has no native bf16) and one model split across both GPUs
-#   - no answer augmentation (original answers only)
+#   - answer augmentation for the first 300 train items only (the rest keep original answers)
 #   - no layer/strength search: the paper's Table 2 settings for Qwen2-VL-7B image are used
 #     (detection layer 6, steering layer 13, strength 25, post-filter layer 20)
 #   - 1 epoch for the direction search
@@ -66,7 +66,13 @@ defense:
   enable_post_filtering: true
 
 augmentation:
-  enabled: false
+  # Needed: without it the post-filter probe only sees 1-2 word answers and rejects any longer answer
+  # (first Kaggle run: 94% of clean VTQA answers -> "Sorry!", every robot episode halted at step 0).
+  enabled: true
+  max_items: 300                     # augment the first 300 train items (~1-1.5 h); the rest keep original answers
+  max_new_tokens: 256                # the short/medium/long JSON is ~150-200 tokens
+  repair_max_new_tokens: 256
+  retries: 1
 
 debug:
   max_samples: 1000                  # caps each split's source; val/test are already 200

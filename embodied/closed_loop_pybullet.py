@@ -466,7 +466,7 @@ def run_episode(
             status = env.execute(action)
         last_result = status
         steps.append({"t": t, "image": img_path.name, "allowed": allowed, **decision, "executed": action,
-                      "status": status, "holding_after": env.holding})
+                      "status": status, "holding_after": env.holding, "tray_after": env.tray_contents()})
         chk = f" [done? {decision['done_check']!r}]" if "done_check" in decision and action != "done" else ""
         print(f"  [{cond.name} seed={seed}] t={t}{chk} -> {decision['raw']!r} => {action} ({status})")
         if action in {"done", "halt"}:

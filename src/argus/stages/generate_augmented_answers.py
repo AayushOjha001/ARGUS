@@ -220,7 +220,14 @@ def main() -> None:
         print(f"augment shard {args.shard_index + 1}/{args.num_shards}: {len(data)} samples")
     else:
         data = all_data
-    for item in tqdm(data, desc="augment train answers"):
+    max_items = cfg_get(config, "augmentation.max_items", None)
+    to_augment = data
+    if max_items is not None:
+        # Low-compute mode: augment only the first N train items (by original index); the rest keep their
+        # original answers, which activation collection and train_vector already fall back to.
+        to_augment = [item for position, item in enumerate(data) if int(item.get("_augmentation_index", position)) < int(max_items)]
+        print(f"augmentation.max_items={max_items}: augmenting {len(to_augment)} of {len(data)} samples")
+    for item in tqdm(to_augment, desc="augment train answers"):
         # Use the target MLLM so augmentation matches its response style.
         first_prompt = AUGMENTATION_PROMPT.format(item["first_instruction"], item["first_answer"])
         second_prompt = AUGMENTATION_PROMPT.format(item["second_instruction"], item["second_answer"])

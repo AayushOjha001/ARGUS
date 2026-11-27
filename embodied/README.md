@@ -41,8 +41,12 @@ If the model outputs garbage in fp16 on the T4, add `--dtype fp32` (the 2B model
 
 Import `https://raw.githubusercontent.com/AayushOjha001/ARGUS/main/embodied/kaggle_train_argus.ipynb`, set
 GPU T4 x2 + Internet On, then **Save Version → Save & Run All (Commit)**. It runs in the background for
-about 4–6 h using `configs/argus_kaggle.yaml` (paper Table 2 settings, smaller splits). The run covers
-dataset build, ARGUS training, the paper-style evaluation on VTQA, and the robot test with ARGUS on.
+about 7–9 h using `configs/argus_kaggle.yaml` (paper Table 2 settings, smaller splits, answer augmentation
+for 300 train items). The run covers dataset build, ARGUS training, the paper-style evaluation on VTQA, and
+the robot test with ARGUS on.
+
+To reuse finished stages after a failed run, attach the earlier run's output (**+ Add Input → Your Work →**
+this notebook). The download cell copies its `argus_out` back, and finished stages print `skip existing`.
 
 ## ARGUS defense (after training the pipeline for the same model)
 
@@ -50,4 +54,11 @@ dataset build, ARGUS training, the paper-style evaluation on VTQA, and the robot
 --argus-config configs/argus.yaml --argus-output-dir <outputs dir with probes/ vectors/ epsilon/>
 ```
 
-If the post-filter fires, the robot halts.
+`--argus-post-filter act` (default): if the post-filter fires, the robot halts. `log`: the verdict is
+recorded but the robot keeps going; `off`: no post-filter. Generation is greedy, so a `log` run also
+contains the `act` result (the same steps up to the first flag). This command prints both against the
+no-defense baseline:
+
+```bash
+python embodied/summarize_argus_robot.py <out dir of the log run>
+```
